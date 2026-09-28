@@ -1,0 +1,198 @@
+
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXORA AI — Universal AI Assistant</title>
+<style>
+:root{
+  --bg:#0b0d12;--panel:#11141b;--panel2:#171b24;--text:#f4f7fb;--muted:#8e97a8;
+  --border:#262c38;--accent:#7c5cff;--accent2:#5eead4;--danger:#ef4444;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+button,input,textarea{font:inherit}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:280px;background:#0d1016;border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:21px;margin-bottom:18px}
+.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#21d4fd);display:grid;place-items:center;font-weight:900}
+.newchat{width:100%;padding:12px;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:12px;cursor:pointer}
+.searchbox{margin:12px 0;padding:10px 12px;background:var(--panel);border:1px solid var(--border);border-radius:10px;color:var(--text);width:100%;outline:none}
+.history{overflow:auto;flex:1}
+.chat-item{padding:11px 12px;border-radius:9px;color:#cbd2df;cursor:pointer;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-item:hover,.chat-item.active{background:var(--panel2);color:white}
+.side-bottom{border-top:1px solid var(--border);padding-top:12px}
+.side-btn{display:block;width:100%;text-align:left;background:transparent;color:#cbd2df;border:0;padding:10px;border-radius:9px;cursor:pointer}
+.side-btn:hover{background:var(--panel2)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:62px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.model{font-weight:700}.badge{font-size:11px;color:var(--accent2);border:1px solid #245b55;padding:4px 8px;border-radius:20px;margin-left:8px}
+.top-actions{display:flex;gap:8px}.icon-btn{border:1px solid var(--border);background:var(--panel);color:#dce2ed;border-radius:9px;padding:8px 10px;cursor:pointer}
+.messages{flex:1;overflow:auto;padding:32px max(20px,calc((100vw - 900px)/2))}
+.welcome{text-align:center;max-width:720px;margin:9vh auto 30px}
+.welcome .big-logo{margin:auto;width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,var(--accent),#21d4fd);display:grid;place-items:center;font-size:30px;font-weight:900}
+.welcome h1{font-size:42px;margin:18px 0 8px}.welcome p{color:var(--muted);font-size:17px}
+.suggestions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:24px}
+.suggest{padding:14px;text-align:left;background:var(--panel);border:1px solid var(--border);border-radius:12px;color:#dce2ed;cursor:pointer}
+.suggest:hover{border-color:#454d60}
+.message{display:flex;gap:12px;margin:22px 0;max-width:850px}
+.message.user{margin-left:auto;flex-direction:row-reverse}
+.avatar{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;background:var(--panel2);border:1px solid var(--border);font-size:14px}
+.bubble{background:var(--panel);border:1px solid var(--border);padding:13px 15px;border-radius:14px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.user .bubble{background:#1d2030}
+.composer-wrap{padding:14px 20px 18px;border-top:1px solid var(--border);background:rgba(11,13,18,.96)}
+.composer{max-width:900px;margin:auto;position:relative}
+textarea{width:100%;resize:none;min-height:58px;max-height:160px;padding:16px 112px 16px 48px;background:var(--panel);border:1px solid var(--border);border-radius:16px;color:white;outline:none}
+textarea:focus{border-color:#4c5670}
+.attach{position:absolute;left:10px;bottom:11px;background:transparent;border:0;color:#aab3c3;font-size:21px;cursor:pointer}
+.send{position:absolute;right:9px;bottom:9px;border:0;background:var(--accent);color:white;border-radius:10px;padding:10px 15px;cursor:pointer;font-weight:700}
+.send:hover{filter:brightness(1.1)}
+.hint{text-align:center;color:#697386;font-size:11px;margin-top:8px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:20}
+.modal{width:min(620px,100%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:20px}
+.modal h2{margin-top:0}.close{float:right;background:transparent;border:0;color:#aaa;font-size:22px;cursor:pointer}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+.switch{width:45px;height:24px;border-radius:20px;background:#394150;position:relative;cursor:pointer}.switch.on{background:var(--accent)}
+.switch:after{content:"";width:18px;height:18px;background:white;border-radius:50%;position:absolute;top:3px;left:3px;transition:.2s}.switch.on:after{left:24px}
+.mobile-menu{display:none}
+@media(max-width:760px){
+ .sidebar{position:fixed;left:-290px;top:0;bottom:0;z-index:15;transition:.25s}.sidebar.open{left:0}
+ .mobile-menu{display:block}
+ .welcome h1{font-size:31px}.suggestions{grid-template-columns:1fr}
+ .messages{padding:20px 12px}.composer-wrap{padding:10px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="logo">N</div>NEXORA AI</div>
+    <button class="newchat" onclick="newChat()">＋ New Chat</button>
+    <input class="searchbox" id="historySearch" placeholder="Search chats..." oninput="filterChats()">
+    <div class="history" id="history"></div>
+    <div class="side-bottom">
+      <button class="side-btn" onclick="openModal()">⚙ Settings</button>
+      <button class="side-btn" onclick="showAbout()">ⓘ About NEXORA</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div><button class="icon-btn mobile-menu" onclick="toggleSidebar()">☰</button> <span class="model">NEXORA AI</span><span class="badge">Universal AI</span></div>
+      <div class="top-actions">
+        <button class="icon-btn" onclick="newChat()">＋</button>
+        <button class="icon-btn" onclick="openModal()">⚙</button>
+      </div>
+    </header>
+
+    <section class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <div class="big-logo">N</div>
+        <h1>Ask Anything.</h1>
+        <p>Learn Anything. Create Anything.<br>তোমার Universal AI Assistant.</p>
+        <div class="suggestions">
+          <button class="suggest" onclick="usePrompt('আমাকে একটি নতুন AI app তৈরির পরিকল্পনা দাও')">💡 AI app তৈরির পরিকল্পনা</button>
+          <button class="suggest" onclick="usePrompt('একটি কঠিন অংক ধাপে ধাপে বুঝিয়ে দাও')">🧮 Math solve</button>
+          <button class="suggest" onclick="usePrompt('Python শেখার জন্য একটি beginner roadmap দাও')">💻 Coding roadmap</button>
+          <button class="suggest" onclick="usePrompt('আমার জন্য একটি study plan তৈরি করো')">🎓 Study plan</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="composer-wrap">
+      <div class="composer">
+        <button class="attach" title="Attach file" onclick="document.getElementById('file').click()">📎</button>
+        <input id="file" type="file" hidden accept="image/*,.pdf,.txt,.doc,.docx" onchange="fileSelected(this)">
+        <textarea id="input" placeholder="NEXORA AI-কে কিছু জিজ্ঞেস করো..." rows="1" onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
+        <button class="send" onclick="sendMessage()">Send ➤</button>
+      </div>
+      <div class="hint">NEXORA AI can make mistakes. Verify important information.</div>
+    </div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="close" onclick="closeModal()">×</button>
+    <h2>NEXORA AI Settings</h2>
+    <div class="settings-row"><span>Dark Mode</span><div class="switch on" onclick="toggleSwitch(this)"></div></div>
+    <div class="settings-row"><span>AI Memory</span><div class="switch on" onclick="toggleSwitch(this)"></div></div>
+    <div class="settings-row"><span>Voice Features</span><div class="switch" onclick="toggleSwitch(this)"></div></div>
+    <div class="settings-row"><span>Web Search</span><div class="switch on" onclick="toggleSwitch(this)"></div></div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:0">Creator: ahmad bhuiyan</p>
+  </div>
+</div>
+
+<script>
+let chats = JSON.parse(localStorage.getItem("nexora_chats") || "[]");
+let currentChat = null;
+
+function save(){localStorage.setItem("nexora_chats",JSON.stringify(chats));renderHistory()}
+function renderHistory(){
+ const q=document.getElementById("historySearch").value.toLowerCase();
+ const box=document.getElementById("history"); box.innerHTML="";
+ chats.filter(c=>c.title.toLowerCase().includes(q)).slice().reverse().forEach(c=>{
+   const d=document.createElement("div"); d.className="chat-item"+(c.id===currentChat?" active":"");
+   d.textContent=c.title; d.onclick=()=>loadChat(c.id); box.appendChild(d);
+ });
+}
+function newChat(){
+ currentChat=null;
+ document.getElementById("messages").innerHTML='<div class="welcome" id="welcome"><div class="big-logo">N</div><h1>Ask Anything.</h1><p>Learn Anything. Create Anything.<br>তোমার Universal AI Assistant.</p><div class="suggestions"><button class="suggest" onclick="usePrompt(\'আমাকে একটি নতুন AI app তৈরির পরিকল্পনা দাও\')">💡 AI app তৈরির পরিকল্পনা</button><button class="suggest" onclick="usePrompt(\'একটি কঠিন অংক ধাপে ধাপে বুঝিয়ে দাও\')">🧮 Math solve</button><button class="suggest" onclick="usePrompt(\'Python শেখার জন্য একটি beginner roadmap দাও\')">💻 Coding roadmap</button><button class="suggest" onclick="usePrompt(\'আমার জন্য একটি study plan তৈরি করো\')">🎓 Study plan</button></div></div>';
+ renderHistory();
+}
+function usePrompt(p){document.getElementById("input").value=p;sendMessage()}
+function handleKey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}}
+function autoGrow(t){t.style.height="auto";t.style.height=Math.min(t.scrollHeight,160)+"px"}
+function addMessage(role,text){
+ const area=document.getElementById("messages");
+ const welcome=document.getElementById("welcome"); if(welcome) welcome.remove();
+ const row=document.createElement("div");row.className="message "+role;
+ const av=document.createElement("div");av.className="avatar";av.textContent=role==="user"?"U":"N";
+ const bubble=document.createElement("div");bubble.className="bubble";bubble.textContent=text;
+ row.append(av,bubble);area.appendChild(row);area.scrollTop=area.scrollHeight;
+}
+function sendMessage(){
+ const input=document.getElementById("input"); const text=input.value.trim(); if(!text)return;
+ if(!currentChat){
+   currentChat=Date.now().toString();
+   chats.push({id:currentChat,title:text.slice(0,38),messages:[]});
+ }
+ const chat=chats.find(c=>c.id===currentChat); chat.messages.push({role:"user",text});
+ addMessage("user",text); input.value="";input.style.height="58px";save();
+ setTimeout(()=>{
+   const reply=demoReply(text);
+   chat.messages.push({role:"assistant",text:reply});addMessage("assistant",reply);save();
+ },500);
+}
+function demoReply(text){
+ const t=text.toLowerCase();
+ if(t.includes("কে তৈরি")||t.includes("who created")) return "আমি NEXORA AI — ahmad bhuiyan-এর জন্য তৈরি করা একটি Universal AI Assistant-এর frontend demo।";
+ if(t.includes("python")) return "Python শেখার জন্য শুরু করতে পারো: ১) Variables ও Data Types → ২) if/else → ৩) loops → ৪) functions → ৫) lists/dictionaries → ৬) OOP → ৭) ছোট project।";
+ if(t.includes("অংক")||t.includes("math")) return "অবশ্যই। অংকটি এখানে লিখে দাও বা ছবি আপলোড করো। আমি ধাপে ধাপে সমাধান দেখাতে পারি।";
+ if(t.includes("study")||t.includes("পড়া")||t.includes("পড়")) return "একটি ভালো study plan বানাতে বিষয়, class/level এবং প্রতিদিন কত ঘণ্টা পড়বে—এই তথ্যগুলো দিলে আরও নির্দিষ্ট পরিকল্পনা করা যাবে।";
+ if(t.includes("ai app")) return "NEXORA AI-এর জন্য MVP হিসেবে Chat UI → Backend API → AI Model → Database → Authentication তৈরি করো। এরপর Web Search, Vision, PDF, Voice ও Quiz একে একে যোগ করো।";
+ return "আমি তোমার প্রশ্নটি বুঝেছি। এই HTML version-এ এখন একটি frontend demo response চলছে। বাস্তব AI উত্তর পেতে Backend API ও একটি AI model provider সংযুক্ত করতে হবে।";
+}
+function loadChat(id){
+ currentChat=id;const c=chats.find(x=>x.id===id);const area=document.getElementById("messages");area.innerHTML="";
+ c.messages.forEach(m=>addMessage(m.role,m.text));renderHistory();
+ if(innerWidth<760)toggleSidebar();
+}
+function filterChats(){renderHistory()}
+function fileSelected(el){if(el.files[0]){document.getElementById("input").value="ফাইল সংযুক্ত করা হয়েছে: "+el.files[0].name;}}
+function openModal(){document.getElementById("overlay").style.display="flex"}
+function closeModal(){document.getElementById("overlay").style.display="none"}
+function toggleSwitch(el){el.classList.toggle("on")}
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open")}
+function showAbout(){alert("NEXORA AI\\nUniversal AI Assistant\\nCreated for ahmad bhuiyan.");}
+renderHistory();
+</script>
+</body>
+</html>
+'''
+path = Path("/mnt/data/nexora-ai.html")
+path.write_text(html, encoding="utf-8")
+print(path)
